@@ -14,9 +14,13 @@ ROOM_ID = <your_room_id>
 def sendNotification(sender, message):
     url = 'http://api.hipchat.com/v1/rooms/message?auth_token=%s&format=json' % (AUTH_TOKEN)
     # concatenates the subject of the email with a link to a page showing the message contents.
+	# extract the username from the email
+    fromSender = sender.split("@")[0].split("<")[0]
     data = urllib.urlencode({'room_id': ROOM_ID, 
-                             'from': 'HipMail',
-                             'message': message})
+                             'from': fromSender[:15],
+                             'message': message,
+							 'message_format': 'html',
+							 'color': 'purple'})
     logging.info('url:%s' % url)
     logging.info('data:%s' % data)
     return json.loads(urllib2.urlopen(url, data).read())
@@ -29,7 +33,7 @@ class EmailReceivedHandler(InboundMailHandler):
         ''' TODO: add in exception handling '''
         email = models.EmailNotification()
         email.email_sender = mail_message.sender
-        email.email_subject = mail_message.subject
+        email.email_subject = mail_message.subject.replace("\n","")
         ''' HACK ALERT '''
         bodies = mail_message.bodies(0)
         for content_type, body in bodies:
